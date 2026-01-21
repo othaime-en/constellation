@@ -42,6 +42,54 @@ async function fetchGitHubContributions(username, year, token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
+    try {
+        const response = await axios.post(
+            GITHUB_GRAPHQL_ENDPOINT,
+            {
+                query,
+                variables: { username, from: fromDate, to: toDate }
+            },
+            { headers }
+        );
+
+        if (response.data.errors) {
+            if (response.data.errors[0].type === 'NOT_FOUND') {
+                throw new Error('User not found');
+            }
+            throw new Error(response.data.errors[0].message);
+        }
+
+        if (!response.data.data.user) {
+            throw new Error('User not found');
+        }
+
+        const calendar = response.data.data.user.contributionsCollection.contributionCalendar;
+
+        // Flatten the weeks into a single array of contributions
+        const contributions = calendar.weeks.flatMap(week =>
+            week.contributionDays.map(day => ({
+                date: day.date,
+                count: day.contributionCount
+            }))
+        );
+
+        return {
+            totalContributions: calendar.totalContributions,
+            contributions
+        };
+
+    } catch (error) {
+        if (error.response?.status === 401) {
+            throw new Error('Invalid GitHub token');
+        }
+        if (error.response?.status === 403) {
+            throw new Error('GitHub API rate limit exceeded');
+        }
+        if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+            throw new Error('Network error - cannot reach GitHub API');
+        }
+        throw error;
+    }
 }
 
 module.exports = { fetchGitHubContributions };
