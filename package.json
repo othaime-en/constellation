@@ -1,0 +1,17 @@
+{
+    "name": "github-constellation",
+    "version": "0.1.0",
+    "description": "Generate a cosmic constellation from your GitHub contributions",
+    "main": "index.js",
+    "bin": {
+        "github-constellation": "./index.js"
+    },
+    "author": "othaime-en",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^1.6.0",
+        "chalk": "^4.1.2",
+        "commander": "^11.1.0",
+        "ora": "^5.4.1"
+    }
+}
